@@ -67,7 +67,7 @@ Fill in applicant details and get predictions in real-time.
 # -----------------------------
 # STEP 4 — User Inputs
 # -----------------------------
-st.subheader("Applicant Details")
+st.subheader("Input Features")
 input_dict = {}
 
 # Numeric inputs
@@ -119,5 +119,4 @@ st.success(f"{status_map[svc_pred]} (Probability: {svc_prob:.2f})")
 # STEP 6 — Show Input Data (checkbox)
 # -----------------------------
 if st.checkbox("Show Input Data"):
-    st.subheader("Input Data")
     st.dataframe(input_df)
