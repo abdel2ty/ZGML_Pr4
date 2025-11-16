@@ -103,14 +103,14 @@ input_df_scaled = input_df_scaled[X_train_scaled.columns].astype(float)
 # -----------------------------
 # STEP 5 — Predictions
 # -----------------------------
-st.markdown("## Predictions")  # أكبر عنوان
+st.markdown("### Predictions")  # أكبر عنوان
 
-st.subheader("KNN Model")
+st.markdown("#### KNN Model")
 knn_pred = knn_model.predict(input_df_scaled)[0]
 knn_prob = knn_model.predict_proba(input_df_scaled)[0,1]
 st.success(f"{status_map[knn_pred]} (Probability: {knn_prob:.2f})")
 
-st.subheader("SVC Model")
+st.markdown("#### SVC Model")
 svc_pred = svc_model.predict(input_df_scaled)[0]
 svc_prob = svc_model.predict_proba(input_df_scaled)[0,1]
 st.success(f"{status_map[svc_pred]} (Probability: {svc_prob:.2f})")
