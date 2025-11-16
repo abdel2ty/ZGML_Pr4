@@ -90,7 +90,6 @@ input_dict['Loan_Amount_Term'] = st.number_input("Loan Amount Term (in months)",
 input_dict['Credit_History'] = st.selectbox("Credit History", [1.0, 0.0])
 
 # Categorical inputs (use original labels)
-# نستخدم القيم الأصلية قبل encoding
 input_dict['Gender'] = st.selectbox("Gender", le_dict['Gender'].classes_)
 input_dict['Married'] = st.selectbox("Married", le_dict['Married'].classes_)
 input_dict['Dependents'] = st.selectbox("Dependents", le_dict['Dependents'].classes_)
@@ -128,8 +127,9 @@ svc_prob = svc_model.predict_proba(input_df_scaled)[0,1]
 
 status_map = {1:"Approved", 0:"Not Approved"}
 
-st.write(f"**KNN Prediction:** {status_map[knn_pred]} (Probability: {knn_prob:.2f})")
-st.write(f"**SVC Prediction:** {status_map[svc_pred]} (Probability: {svc_prob:.2f})")
+# Display predictions in green using st.success
+st.success(f"**KNN Prediction:** {status_map[knn_pred]} (Probability: {knn_prob:.2f})")
+st.success(f"**SVC Prediction:** {status_map[svc_pred]} (Probability: {svc_prob:.2f})")
 
 # Optional: Show raw input data
 if st.checkbox("Show Input Data"):
