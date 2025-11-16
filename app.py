@@ -11,8 +11,8 @@ from sklearn.model_selection import train_test_split
 # -----------------------------
 @st.cache_data
 def load_data():
-    train = pd.read_csv("/kaggle/input/home-loan-approval/loan_sanction_train.csv")
-    test  = pd.read_csv("/kaggle/input/home-loan-approval/loan_sanction_test.csv")
+    train = pd.read_csv("loan_sanction_train.csv")
+    test  = pd.read_csv("loan_sanction_test.csv")
     return train, test
 
 train, test = load_data()
