@@ -90,12 +90,13 @@ input_dict['Loan_Amount_Term'] = st.number_input("Loan Amount Term (in months)",
 input_dict['Credit_History'] = st.selectbox("Credit History", [1.0, 0.0])
 
 # Categorical inputs (use original labels)
-input_dict['Gender'] = st.selectbox("Gender", train_df['Gender'].unique())
-input_dict['Married'] = st.selectbox("Married", train_df['Married'].unique())
-input_dict['Dependents'] = st.selectbox("Dependents", train_df['Dependents'].unique())
-input_dict['Education'] = st.selectbox("Education", train_df['Education'].unique())
-input_dict['Self_Employed'] = st.selectbox("Self Employed", train_df['Self_Employed'].unique())
-input_dict['Property_Area'] = st.selectbox("Property Area", train_df['Property_Area'].unique())
+# نستخدم القيم الأصلية قبل encoding
+input_dict['Gender'] = st.selectbox("Gender", le_dict['Gender'].classes_)
+input_dict['Married'] = st.selectbox("Married", le_dict['Married'].classes_)
+input_dict['Dependents'] = st.selectbox("Dependents", le_dict['Dependents'].classes_)
+input_dict['Education'] = st.selectbox("Education", le_dict['Education'].classes_)
+input_dict['Self_Employed'] = st.selectbox("Self Employed", le_dict['Self_Employed'].classes_)
+input_dict['Property_Area'] = st.selectbox("Property Area", le_dict['Property_Area'].classes_)
 
 input_df = pd.DataFrame([input_dict])
 
@@ -110,6 +111,10 @@ for col in categorical_cols:
 # Scale numeric
 input_df_scaled = input_df.copy()
 input_df_scaled[numeric_cols] = scaler.transform(input_df[numeric_cols])
+
+# Ensure columns order and type matches training data
+input_df_scaled = input_df_scaled[X_train_scaled.columns]
+input_df_scaled = input_df_scaled.astype(float)
 
 # -----------------------------
 # STEP 6 — Prediction
