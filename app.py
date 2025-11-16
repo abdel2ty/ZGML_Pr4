@@ -4,7 +4,6 @@ import numpy as np
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
-import joblib
 
 # -----------------------------
 # STEP 1 — Load Dataset
@@ -23,61 +22,50 @@ train_df, test_df = load_data()
 categorical_cols = ['Gender','Married','Dependents','Education','Self_Employed','Property_Area']
 numeric_cols = ['ApplicantIncome','CoapplicantIncome','LoanAmount','Loan_Amount_Term','Credit_History']
 
-# Fill missing categorical with mode
 for col in categorical_cols:
     train_df[col].fillna(train_df[col].mode()[0], inplace=True)
-
-# Fill missing numeric with median
 for col in numeric_cols:
     train_df[col].fillna(train_df[col].median(), inplace=True)
 
-# Encode categorical features
 le_dict = {}
 for col in categorical_cols + ['Loan_Status']:
     le = LabelEncoder()
     train_df[col] = le.fit_transform(train_df[col])
     le_dict[col] = le
 
-# Features & target
 X_train = train_df.drop(columns=['Loan_ID','Loan_Status'])
 y_train = train_df['Loan_Status']
 
-# Scale numeric features only
 scaler = StandardScaler()
 X_train_scaled = X_train.copy()
 X_train_scaled[numeric_cols] = scaler.fit_transform(X_train[numeric_cols])
 
-# -----------------------------
-# STEP 3 — Train Models
-# -----------------------------
 @st.cache(allow_output_mutation=True)
 def train_models(X, y):
     knn = KNeighborsClassifier(n_neighbors=5, weights='distance')
     knn.fit(X, y)
-    
     svc = SVC(probability=True)
     svc.fit(X, y)
-    
     return knn, svc
 
 knn_model, svc_model = train_models(X_train_scaled, y_train)
 
+status_map = {1:"Approved", 0:"Not Approved"}
+
 # -----------------------------
-# STEP 4 — Streamlit Layout
+# STEP 3 — Streamlit Layout
 # -----------------------------
+st.set_page_config(page_title="Home Loan Approval", layout="wide")
 st.title("Home Loan Approval Prediction")
 
 st.sidebar.header("About This Project")
 st.sidebar.info("""
-This app predicts whether a **Home Loan will be Approved or Not**.  
-Models used: **KNN Classifier** & **SVC Classifier**.  
-
-- Fill in the applicant's details below  
-- Prediction is shown in real-time
+Predict whether a Home Loan will be approved using **KNN** and **SVC** classifiers.  
+Fill in applicant details and get predictions in real-time.
 """)
 
 # -----------------------------
-# STEP 5 — User Inputs
+# STEP 4 — User Inputs
 # -----------------------------
 st.subheader("Applicant Details")
 input_dict = {}
@@ -86,10 +74,10 @@ input_dict = {}
 input_dict['ApplicantIncome'] = st.number_input("Applicant Income", min_value=0, value=5000)
 input_dict['CoapplicantIncome'] = st.number_input("Coapplicant Income", min_value=0, value=0)
 input_dict['LoanAmount'] = st.number_input("Loan Amount", min_value=0, value=150)
-input_dict['Loan_Amount_Term'] = st.number_input("Loan Amount Term (in months)", min_value=12, value=360)
+input_dict['Loan_Amount_Term'] = st.number_input("Loan Amount Term (months)", min_value=12, value=360)
 input_dict['Credit_History'] = st.selectbox("Credit History", [1.0, 0.0])
 
-# Categorical inputs (use original labels)
+# Categorical inputs as selectbox
 input_dict['Gender'] = st.selectbox("Gender", le_dict['Gender'].classes_)
 input_dict['Married'] = st.selectbox("Married", le_dict['Married'].classes_)
 input_dict['Dependents'] = st.selectbox("Dependents", le_dict['Dependents'].classes_)
@@ -105,22 +93,17 @@ for col in categorical_cols:
     if input_df[col][0] in le.classes_:
         input_df[col] = le.transform(input_df[col])
     else:
-        input_df[col] = le.transform([le.classes_[0]])  # use mode if new value
+        input_df[col] = le.transform([le.classes_[0]])
 
 # Scale numeric
 input_df_scaled = input_df.copy()
 input_df_scaled[numeric_cols] = scaler.transform(input_df[numeric_cols])
-
-# Ensure columns order and type matches training data
-input_df_scaled = input_df_scaled[X_train_scaled.columns]
-input_df_scaled = input_df_scaled.astype(float)
+input_df_scaled = input_df_scaled[X_train_scaled.columns].astype(float)
 
 # -----------------------------
-# STEP 6 — Prediction
+# STEP 5 — Predictions
 # -----------------------------
-status_map = {1:"Approved", 0:"Not Approved"}  # تعريف قبل الاستخدام
-
-st.markdown("## Predictions")
+st.markdown("## Predictions")  # أكبر عنوان
 
 st.subheader("KNN Model")
 knn_pred = knn_model.predict(input_df_scaled)[0]
@@ -133,7 +116,8 @@ svc_prob = svc_model.predict_proba(input_df_scaled)[0,1]
 st.success(f"{status_map[svc_pred]} (Probability: {svc_prob:.2f})")
 
 # -----------------------------
-# Show Input Data Always
+# STEP 6 — Show Input Data (checkbox)
 # -----------------------------
-st.subheader("Input Data")
-st.dataframe(input_df)
+if st.checkbox("Show Input Data"):
+    st.subheader("Input Data")
+    st.dataframe(input_df)
