@@ -20,13 +20,14 @@ train_df, test_df = load_data()
 # -----------------------------
 # STEP 2 — Data Cleaning
 # -----------------------------
-# Fill missing categorical with mode
 categorical_cols = ['Gender','Married','Dependents','Education','Self_Employed','Property_Area']
+numeric_cols = ['ApplicantIncome','CoapplicantIncome','LoanAmount','Loan_Amount_Term','Credit_History']
+
+# Fill missing categorical with mode
 for col in categorical_cols:
     train_df[col].fillna(train_df[col].mode()[0], inplace=True)
 
 # Fill missing numeric with median
-numeric_cols = ['LoanAmount','Loan_Amount_Term','Credit_History']
 for col in numeric_cols:
     train_df[col].fillna(train_df[col].median(), inplace=True)
 
@@ -41,14 +42,15 @@ for col in categorical_cols + ['Loan_Status']:
 X_train = train_df.drop(columns=['Loan_ID','Loan_Status'])
 y_train = train_df['Loan_Status']
 
-# Scale numeric features
+# Scale numeric features only
 scaler = StandardScaler()
-X_train_scaled = scaler.fit_transform(X_train)
+X_train_scaled = X_train.copy()
+X_train_scaled[numeric_cols] = scaler.fit_transform(X_train[numeric_cols])
 
 # -----------------------------
 # STEP 3 — Train Models
 # -----------------------------
-@st.cache_resource
+@st.cache_resource(show_spinner=False, allow_output_mutation=True)
 def train_models(X, y):
     knn = KNeighborsClassifier(n_neighbors=5, weights='distance')
     knn.fit(X, y)
@@ -64,8 +66,6 @@ knn_model, svc_model = train_models(X_train_scaled, y_train)
 # STEP 4 — Streamlit Layout
 # -----------------------------
 st.title("Home Loan Approval Prediction")
-
-# Sidebar info
 st.sidebar.header("About This Project")
 st.sidebar.info("""
 This app predicts whether a **Home Loan will be Approved or Not**.  
@@ -79,17 +79,16 @@ Models used: **KNN Classifier** & **SVC Classifier**.
 # STEP 5 — User Inputs
 # -----------------------------
 st.subheader("Applicant Details")
-
 input_dict = {}
 
 # Numeric inputs
 input_dict['ApplicantIncome'] = st.number_input("Applicant Income", min_value=0, value=5000)
 input_dict['CoapplicantIncome'] = st.number_input("Coapplicant Income", min_value=0, value=0)
 input_dict['LoanAmount'] = st.number_input("Loan Amount", min_value=0, value=150)
-input_dict['Loan_Amount_Term'] = st.number_input("Loan Amount Term (in days)", min_value=12, value=360)
+input_dict['Loan_Amount_Term'] = st.number_input("Loan Amount Term (in months)", min_value=12, value=360)
 input_dict['Credit_History'] = st.selectbox("Credit History", [1.0, 0.0])
 
-# Categorical inputs
+# Categorical inputs (use original labels)
 input_dict['Gender'] = st.selectbox("Gender", train_df['Gender'].unique())
 input_dict['Married'] = st.selectbox("Married", train_df['Married'].unique())
 input_dict['Dependents'] = st.selectbox("Dependents", train_df['Dependents'].unique())
@@ -102,20 +101,19 @@ input_df = pd.DataFrame([input_dict])
 # Encode categorical safely
 for col in categorical_cols:
     le = le_dict[col]
-    try:
+    if input_df[col][0] in le.classes_:
         input_df[col] = le.transform(input_df[col])
-    except ValueError:
-        # إذا القيمة الجديدة مش موجودة استخدم الأكثر شيوعًا
-        input_df[col] = le.transform([le.classes_[0]])
+    else:
+        input_df[col] = le.transform([le.classes_[0]])  # use mode if new value
 
 # Scale numeric
-input_df_scaled = scaler.transform(input_df)
+input_df_scaled = input_df.copy()
+input_df_scaled[numeric_cols] = scaler.transform(input_df[numeric_cols])
 
 # -----------------------------
 # STEP 6 — Prediction
 # -----------------------------
 st.subheader("Predictions")
-
 knn_pred = knn_model.predict(input_df_scaled)[0]
 knn_prob = knn_model.predict_proba(input_df_scaled)[0,1]
 
