@@ -50,7 +50,7 @@ X_train_scaled[numeric_cols] = scaler.fit_transform(X_train[numeric_cols])
 # -----------------------------
 # STEP 3 — Train Models
 # -----------------------------
-@st.cache_resource(show_spinner=False, allow_output_mutation=True)
+@st.cache(allow_output_mutation=True)
 def train_models(X, y):
     knn = KNeighborsClassifier(n_neighbors=5, weights='distance')
     knn.fit(X, y)
@@ -66,6 +66,7 @@ knn_model, svc_model = train_models(X_train_scaled, y_train)
 # STEP 4 — Streamlit Layout
 # -----------------------------
 st.title("Home Loan Approval Prediction")
+
 st.sidebar.header("About This Project")
 st.sidebar.info("""
 This app predicts whether a **Home Loan will be Approved or Not**.  
